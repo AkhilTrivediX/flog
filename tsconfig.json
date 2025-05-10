@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",                  // Can stay ESNext (for modern JavaScript features)
+    "module": "commonjs",                 // Change this to CommonJS for compatibility with `require`
+    "moduleResolution": "Node",           // Helps Node.js resolve modules correctly
+    "declaration": true,                  // If you want .d.ts files for TypeScript consumers
+    "declarationDir": "dist",             // Output directory for declarations
+    "outDir": "dist",                     // Output directory for JavaScript
+    "esModuleInterop": true,              // For compatibility with default imports
+    "forceConsistentCasingInFileNames": true, // Ensures consistent file naming
+    "strict": true,                       // Optional but helps catch issues early
+    "skipLibCheck": true                  // Optional, can skip library type checks
+  },
+  "include": ["src"]                       // Include your source folder
+}

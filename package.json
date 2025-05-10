@@ -1,6 +1,6 @@
 {
   "name": "@akhilx/flog",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A minimal and extensible ANSI-based logger with style and template support.",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -31,5 +31,12 @@
     "url": "https://github.com/AkhilTrivediX/flog.git"
   },
   "homepage": "https://github.com/AkhilTrivediX/flog#readme",
-  "keywords": ["logger", "console", "ansi", "stylized logs", "cli", "chalk alternative"]
+  "keywords": [
+    "logger",
+    "console",
+    "ansi",
+    "stylized logs",
+    "cli",
+    "chalk alternative"
+  ]
 }

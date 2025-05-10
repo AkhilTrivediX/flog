@@ -35,6 +35,8 @@ flog.warn('Data fetched is in wrong format!');
 flog.error('Failed to Fetch Data!');
 ```
 
+![Built-In Style Demo](assets/demo1.png)
+
 If you're using CommonJS:
 
 ```js
@@ -49,9 +51,11 @@ Apply one or more styles using keywords:
 
 ```ts
 flog.style('red underline', 'Styled message');
-flog.style('bgRed bold', 'Important alert');
+flog.style('bgBlue bold', 'Important alert');
 flog.style('blue bgYellow italic', 'Color combo!');
 ```
+
+![Styles](assets/demo2.png)
 
 ### ✅ Supported styles (partial)
 
@@ -131,7 +135,7 @@ MIT © [Akhil](https://github.com/AkhilTrivediX)
 
 ---
 
-## 🌟 Star This Repo
+## 🌟 Star & Help building this repo
 
 If you find this useful, please ⭐️ the repo:
 [https://github.com/AkhilTrivediX/flog](https://github.com/AkhilTrivediX/flog)

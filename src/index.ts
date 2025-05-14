@@ -1,4 +1,4 @@
-
+import readline from 'readline'
 
 const ansi: { [key: string]: number } = {
     reset: 0,
@@ -62,32 +62,127 @@ export type FlogInstance = {
 
 function createFLog(): FlogInstance {
     let disableIcons = false;
+    let LoaderManager: {id: string, msg: string, promiseStatus?: number[], loaderLength?: number}[] = [];
+    let tickInterval = 100;
+    let ticking = false;
+    let tickFrames = 0;
 
-    const logger: any = (...args: any[]) => console.log(...args);
+    const logger: any = (...args: any[]) => {
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+        console.log(...args);
+    }
 
     func.forEach((key) => {
         logger[key] = (...args: any[]) => {
             const icon = disableIcons ? '' : icons[key] || '';
-            console.log(`\x1b[${ansi[key]}m${icon?icon+' ':''}${args.join(' ')}\x1b[${ansi.reset}m`);
+            logger(`\x1b[${ansi[key]}m${icon?icon+' ':''}${args.join(' ')}\x1b[${ansi.reset}m`);
         };
     });
 
+
+    logger.loader = (promise: Promise<any> | Promise<any>[], loadingMsg: string, successMsg?: string, errorMsg?: string) => {
+        let id = crypto.randomUUID();
+        LoaderManager.push({id, msg: loadingMsg, ...(Array.isArray(promise)?{promiseStatus: Array(promise.length).fill('_').map(_=>0), loaderLength: 0}:{})});
+
+        if(!ticking) {
+            tick();
+            ticking = true;
+        }
+
+        if(Array.isArray(promise))
+        {
+
+            let isThereAnyReject = false;
+             return Promise.all(promise.map((p, i)=>{
+                return p.then((obj)=>{
+                    if(!LoaderManager.find((p)=>p.id==id)) return obj; 
+                    const pStatus = LoaderManager.find(x=>x.id==id)!.promiseStatus!
+                    pStatus[pStatus.findIndex((x,i)=>x==0)] = 1;
+                    return obj
+                }, (obj)=>{
+                    if(promise.length>10) isThereAnyReject = true;
+                    if(!LoaderManager.find((p)=>p.id==id)) return obj; 
+                    const pStatus = LoaderManager.find(x=>x.id==id)!.promiseStatus!
+                    pStatus[pStatus.findIndex((x,i)=>x==0)] = -1;
+                    return obj
+                })
+            })).then(async res=>{
+                if(!LoaderManager.find((p)=>p.id==id)) return;
+                const obj = LoaderManager.find(x=>x.id==id)!;
+                    LoaderManager = LoaderManager.filter((item)=>item.id!==id)
+                    if(!obj.loaderLength) obj.loaderLength = 0;
+                    logger('✅',generatePercentageString(obj.promiseStatus!, 9, isThereAnyReject).str, obj.msg);
+                    return res;
+            })
+        }
+        else{
+                return promise.then((obj)=>{
+                if(!LoaderManager.find((p)=>p.id==id)) return obj; 
+                LoaderManager = LoaderManager.filter((item)=>item.id!==id);
+                let ret = 'SUCCESS: '+loadingMsg;
+                if(successMsg) ret = successMsg;
+                if(obj && obj.flog) ret = obj.flog;
+                logger.success(ret);
+                return obj
+            },(obj)=>{
+                if(!LoaderManager.find((p)=>p.id==id)) return obj;
+                LoaderManager = LoaderManager.filter((item)=>item.id!==id);
+                let ret = 'FAILED: '+loadingMsg;
+                if(errorMsg) ret = errorMsg;
+                if(obj && obj.flog) ret = obj.flog;
+                logger.error(ret);
+                return obj;
+            })
+        }
+    }
+
+    const loaderFrames =  [
+			"⢎ ",
+			"⠎⠁",
+			"⠊⠑",
+			"⠈⠱",
+			" ⡱",
+			"⢀⡰",
+			"⢄⡠",
+			"⢆⡀"
+		]
+
+    function tick(){
+        tickFrames = (tickFrames+1)%60;
+        LoaderManager.forEach((obj)=>{
+            if(!obj.promiseStatus) logger(loaderFrames[tickFrames%loaderFrames.length], obj.msg);
+            else{
+                if(!obj.loaderLength) obj.loaderLength = 0;
+                const ret = generatePercentageString(obj.promiseStatus, obj.loaderLength);
+                const str = ret.str;
+                obj.loaderLength = ret.loaderLength;
+                logger(loaderFrames[tickFrames%loaderFrames.length],str, obj.msg);
+            }
+        })
+        console.log(`\x1b[${LoaderManager.length+1}A`)
+
+        if(LoaderManager.length>0)setTimeout(tick, tickInterval);
+        else ticking = false;
+    }
+
+
     logger.style = (style: string, ...args: any[]) => {
         if (args.length === 0) {
-            console.log(style);
+            logger(style);
             return;
         }
     
         let combined = formatANSI(style);
         
         const styled = args.map(arg => `${combined}${String(arg)}\x1b[${ansi.reset}m`);
-        console.log(...styled);
+        logger(...styled);
     };
 
     logger.addPreset = (name: string, style: string) => {
         const ansiStyle = formatANSI(style);
         logger[name] = (...args: any[]) => {
-            console.log(`${ansiStyle}${args.join(' ')}\x1b[${ansi.reset}m`);
+            logger(`${ansiStyle}${args.join(' ')}\x1b[${ansi.reset}m`);
         };
     }
 
@@ -98,7 +193,6 @@ function createFLog(): FlogInstance {
     logger.enableIcons = () => {
         disableIcons = false;
     }
-
 
     return logger;
 }
@@ -145,3 +239,55 @@ const formatANSI = (style: string)=>{
 const flog = createFLog();
 
 export default flog;
+
+function generatePercentageString(promiseStatus: number[], loaderLength: number, addRejectAtEnd?:boolean){
+    const tenArr = scaleArray(promiseStatus, 10).filter(x=>x!=0);
+    if(addRejectAtEnd) tenArr[9] = -1;
+                if(tenArr.length>loaderLength){
+                     loaderLength++;
+                }
+                let str = '[';
+                for(let i=0; i<loaderLength; i++){
+                    str+= '\x1b[' +(tenArr[i]==1?ansi.green:ansi.red) + 'm██';
+                }                               
+                str+='\x1b[0m'
+                
+                for(let i=loaderLength; i<10; i++){
+                    str+='██'
+                }
+                str+='] '+Math.round(tenArr.length*10)+'%';
+                return {str, loaderLength}
+}
+
+function scaleArray(oldArray:number[], newSize:number) {
+    const oldSize = oldArray.length;
+    const newArray = new Array(newSize);
+
+    for (let j = 0; j < newSize; j++) {
+        // Determine the range in the original array that maps to this index
+        const start = j * oldSize / newSize;
+        const end = (j + 1) * oldSize / newSize;
+
+        // Collect overlapping indices
+        const startIndex = Math.floor(start);
+        const endIndex = Math.ceil(end);
+
+        const values = [];
+        for (let i = startIndex; i < endIndex; i++) {
+            if (i >= 0 && i < oldSize) {
+                values.push(oldArray[i]);
+            }
+        }
+
+        // Conflict resolution: true > false > null
+        if (values.includes(1)) {
+            newArray[j] = 1;
+        } else if (values.includes(-1)) {
+            newArray[j] = -1;
+        } else {
+            newArray[j] = 0;
+        }
+    }
+
+    return newArray;
+}

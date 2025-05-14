@@ -9,8 +9,8 @@
 - 🎨 **Custom styles**: Use `flog.style()` to apply multiple ANSI styles, foregrounds, backgrounds
 - 🟦 **Supports**: `hex`, `bgHex`, `rgb`, `bgRgb` for true color output
 - 🧩 **Presets**: Create reusable styles with `flog.addPreset('name', 'style')`
-- ⚙️ **Toggle icons**: `flog.disableIcons()` / `flog.enableIcons()`
-- 🪶 Zero dependencies (chalk not needed!)
+- ⚙️ **Smart Loading**: Visualize promise waiting using `flog.loader()`.
+- 🪶 Zero dependencies & Lightweight
 
 ---
 
@@ -42,6 +42,26 @@ If you're using CommonJS:
 ```js
 const flog = require('@akhilx/flog').default;
 ```
+
+## 💫 Promise Spinners and Loaders
+
+```ts
+//Use Spinners to wait for single promise
+flog.loader(fetch('api.example.com'),'Waiting for response.');
+flog.loader(fetch('api.example.com'), 'Waiting for response', 'Response Received', 'Request Failed'); //Custom success and fail messages.
+// ⚠️ Do not use await while passing promise to loader function. flog.loader(await fetch...) ❌
+
+//Using multiple promises for Percentage Animation
+const responses = await flog.loader([
+    fetch('api.example.com'),
+    fetch('api.example2.com'),
+    updateDb(data),
+    //Other operations
+], 'Updating Data...');
+console.log('Responses:', responses);
+```
+
+![Loader](assets/demo3.gif)
 
 ---
 
@@ -121,6 +141,7 @@ flog.success('Icons are back!');
 | `flog.success(...args)`        | Green ✅ message         |
 | `flog.info(...args)`           | Blue ℹ️ message         |
 | `flog.warn(...args)`           | Yellow ⚠️ message       |
+| `flog.logger(Promise \| Promises[], msg...)`          | Promise Spinner or loaders           |
 | `flog.error(...args)`          | Red ❌ message           |
 | `flog.style(styles, ...args)`  | Apply multiple styles   |
 | `flog.addPreset(name, styles)` | Add custom logger       |
